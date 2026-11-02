@@ -16,8 +16,11 @@ export interface SessionData {
   isLoggedIn: boolean;
 }
 
+const rawSecret = process.env.SESSION_SECRET || 'complex_password_at_least_32_characters_long!!';
+const sessionPassword = rawSecret.length >= 32 ? rawSecret : rawSecret.padEnd(32, '_erp_secure_session_salt_token_32');
+
 export const sessionOptions = {
-  password: process.env.SESSION_SECRET || 'complex_password_at_least_32_characters_long!!',
+  password: sessionPassword,
   cookieName: 'erp_session',
   cookieOptions: {
     secure: process.env.NODE_ENV === 'production',

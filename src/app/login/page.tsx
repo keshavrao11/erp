@@ -30,15 +30,21 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = { error: `Server response error (${res.status}). Please check server logs.` };
+      }
+
       if (!res.ok) {
-        setError(data.error || 'Login failed');
+        setError(data.error || 'Authentication failed. Please verify credentials.');
       } else {
         router.push('/dashboard');
         router.refresh();
       }
-    } catch {
-      setError('Network error. Please try again.');
+    } catch (err: any) {
+      setError(err?.message || 'Connection refused: Server is offline or unreachable.');
     } finally {
       setLoading(false);
     }

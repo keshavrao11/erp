@@ -105,13 +105,13 @@ export class ProcurementRepository {
 
   createPO(data: {
     companyId: string; vendorId: string; poDate: string; expectedDeliveryDate: string;
-    projectId?: string; mrId?: string; paymentTerms: string;
+    projectId?: string; mrId?: string; paymentTerms: string; poNumber?: string;
     items: { materialId: string; mrItemId?: string; description: string; quantity: number; unit: string; unitRatePaise: number; taxCodeId?: string }[];
     createdBy: string;
-  }): string {
+  }): { id: string; poNumber: string } {
     const id = crypto.randomUUID();
     const count = (db.prepare(`SELECT COUNT(*) as c FROM purchase_orders WHERE company_id = ?`).get(data.companyId) as any).c;
-    const number = `PO-${new Date().getFullYear()}-${String(count + 1).padStart(5,'0')}`;
+    const number = data.poNumber?.trim() || `PO-${new Date().getFullYear()}-${String(count + 1).padStart(5,'0')}`;
     
     const total = data.items.reduce((s, i) => s + i.quantity * i.unitRatePaise, 0);
 
@@ -135,7 +135,7 @@ export class ProcurementRepository {
         tx.prepare(`UPDATE material_requisitions SET status = 'PO_CREATED' WHERE id = ?`).run(data.mrId);
       }
     });
-    return id;
+    return { id, poNumber: number };
   }
 
   createGRN(data: {

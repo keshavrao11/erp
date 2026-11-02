@@ -259,11 +259,14 @@ export function seedDatabase() {
     // Active Plot Booking for Plot-01
     const plot1 = tx.prepare(`SELECT id, total_price_paise FROM plot_inventory WHERE plot_number = 'Plot-01' AND project_id = ?`).get(prjLand.id) as { id: string; total_price_paise: number };
     if (plot1) {
-      const bkgId = crypto.randomUUID();
       tx.prepare(`
         INSERT OR IGNORE INTO plot_bookings (id, plot_id, customer_id, booking_number, booking_date, token_amount_paise, agreement_value_paise, payment_plan, status, booked_by)
         VALUES (?, ?, ?, 'BKG-2026-00001', '2026-10-15', 50000000, ?, 'MILESTONE', 'ACTIVE', ?)
-      `).run(bkgId, plot1.id, cust3.id, plot1.total_price_paise, adminUser.id);
+      `).run(crypto.randomUUID(), plot1.id, cust3.id, plot1.total_price_paise, adminUser.id);
+      const booking = tx.prepare(`SELECT id FROM plot_bookings WHERE booking_number = 'BKG-2026-00001'`).get() as { id: string } | undefined;
+      if (!booking) {
+        throw new Error('Failed to create or load seeded plot booking BKG-2026-00001');
+      }
 
       // Instalments
       const instData = [
@@ -276,7 +279,7 @@ export function seedDatabase() {
         tx.prepare(`
           INSERT OR IGNORE INTO plot_instalments (id, booking_id, instalment_number, due_date, amount_paise, description, status)
           VALUES (?, ?, ?, ?, ?, ?, ?)
-        `).run(crypto.randomUUID(), bkgId, ins.num, ins.due, ins.amt, ins.desc, ins.status);
+        `).run(crypto.randomUUID(), booking.id, ins.num, ins.due, ins.amt, ins.desc, ins.status);
       }
     }
 
@@ -385,19 +388,22 @@ export function seedDatabase() {
     ];
 
     for (const v of vouchersToSeed) {
-      const vId = crypto.randomUUID();
       const drSum = v.lines.reduce((s, l) => s + l.dr, 0);
       const crSum = v.lines.reduce((s, l) => s + l.cr, 0);
       tx.prepare(`
         INSERT OR IGNORE INTO vouchers (id, company_id, vertical_id, project_id, voucher_number, voucher_type, voucher_date, narration, total_debit_paise, total_credit_paise, status, idempotency_key, created_by)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'POSTED', ?, ?)
-      `).run(vId, cid, v.vertId, v.prjId, v.no, v.type, v.date, v.narration, drSum, crSum, crypto.randomUUID(), adminUser.id);
+      `).run(crypto.randomUUID(), cid, v.vertId, v.prjId, v.no, v.type, v.date, v.narration, drSum, crSum, crypto.randomUUID(), adminUser.id);
+      const voucher = tx.prepare(`SELECT id FROM vouchers WHERE voucher_number = ?`).get(v.no) as { id: string } | undefined;
+      if (!voucher) {
+        throw new Error(`Failed to create or load seeded voucher ${v.no}`);
+      }
 
       for (const line of v.lines) {
         tx.prepare(`
           INSERT OR IGNORE INTO ledger_entries (id, voucher_id, account_id, debit_paise, credit_paise)
           VALUES (?, ?, ?, ?, ?)
-        `).run(crypto.randomUUID(), vId, line.accId, line.dr, line.cr);
+        `).run(crypto.randomUUID(), voucher.id, line.accId, line.dr, line.cr);
       }
     }
 

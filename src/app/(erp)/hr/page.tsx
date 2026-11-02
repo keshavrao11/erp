@@ -229,6 +229,7 @@ export default function HrPage() {
           <DataTable
             columns={columns}
             data={employees}
+            onRowDoubleClick={(row) => setActiveEmployee(row)}
             exportFileName="employee-register"
             searchable
             searchPlaceholder="Search staff by name, code, designation..."
@@ -254,6 +255,7 @@ export default function HrPage() {
               { key: 'created_at', header: 'Disbursement Date', render: (r: any) => <span className="font-mono text-xs text-slate-500">{r.created_at ? new Date(r.created_at).toLocaleDateString() : '2026-11-01'}</span> },
             ]}
             data={payrollRuns}
+            onRowDoubleClick={(row) => setShowPayrollModal(true)}
             exportFileName="payroll-runs"
             searchable
             searchPlaceholder="Search payroll by month..."

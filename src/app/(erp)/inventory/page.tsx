@@ -174,6 +174,7 @@ export default function InventoryPage() {
               { key: 'hsn_code', header: 'HSN / GST', render: (r: any) => <span className="font-mono text-[11px] text-slate-500">{r.hsn_code || '6810'} ({r.gst_rate || 18}%)</span> },
             ]}
             data={materials}
+            onRowDoubleClick={(row) => setActiveMaterial(row)}
             exportFileName="inventory-stock-ledger"
             searchable
             searchPlaceholder="Search materials by code or name..."
@@ -193,6 +194,15 @@ export default function InventoryPage() {
               { key: 'created_at', header: 'Timestamp', render: (r: any) => <span className="font-mono text-xs text-slate-500">{new Date(r.created_at).toLocaleDateString()}</span> },
             ]}
             data={issues}
+            onRowDoubleClick={(row) => {
+              setIssueForm({
+                materialId: row.material_id || materials[0]?.id || '',
+                quantity: Math.abs(row.quantity || 1),
+                rateRupees: 385,
+                siteLocation: row.project_name || 'Villa Block 04 Foundation',
+              });
+              setShowIssueModal(true);
+            }}
             exportFileName="site-material-issues"
             searchable
             searchPlaceholder="Search issue notes..."

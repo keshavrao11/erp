@@ -20,6 +20,9 @@ interface DataTableProps<T> {
   searchFilter?: (item: T, query: string) => boolean;
   exportable?: boolean;
   exportFileName?: string;
+  onRowClick?: (row: T) => void;
+  onRowDoubleClick?: (row: T) => void;
+  doubleClickHint?: string;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -33,6 +36,9 @@ export function DataTable<T extends Record<string, any>>({
   searchFilter,
   exportable = true,
   exportFileName = 'erp-export',
+  onRowClick,
+  onRowDoubleClick,
+  doubleClickHint,
 }: DataTableProps<T>) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -84,6 +90,11 @@ export function DataTable<T extends Record<string, any>>({
           </div>
         ) : <div />}
         <div className="flex items-center gap-3">
+          {onRowDoubleClick && (
+            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-blue-600 bg-blue-50 border border-blue-200/80 px-2 py-0.5 rounded-md font-medium">
+              Double-click row to open
+            </span>
+          )}
           <span className="text-xs text-slate-500 font-medium">Total: {total} items</span>
           {exportable && total > 0 && (
             <button
@@ -117,7 +128,17 @@ export function DataTable<T extends Record<string, any>>({
               </tr>
             ) : (
               sliced.map((row, i) => (
-                <tr key={row[keyField] ?? i} className="hover:bg-slate-50/80 transition-colors">
+                <tr
+                  key={row[keyField] ?? i}
+                  onClick={() => onRowClick?.(row)}
+                  onDoubleClick={() => onRowDoubleClick?.(row)}
+                  title={onRowDoubleClick ? (doubleClickHint || 'Double-click to open record details') : undefined}
+                  className={`transition-colors ${
+                    onRowDoubleClick || onRowClick
+                      ? 'hover:bg-blue-50/70 cursor-pointer select-none active:bg-blue-100/50'
+                      : 'hover:bg-slate-50/80'
+                  }`}
+                >
                   {columns.map((col) => (
                     <td key={col.key} className={`px-4 py-2.5 text-slate-700 ${col.className || ''}`}>
                       {col.render ? col.render(row) : String(row[col.key] ?? '-')}

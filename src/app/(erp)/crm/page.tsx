@@ -508,6 +508,7 @@ export default function CrmPage() {
           <DataTable
             columns={columns}
             data={enquiries}
+            onRowDoubleClick={(row) => setActiveLead(row)}
             exportFileName="crm-leads"
             searchable
             searchPlaceholder="Search leads by name, phone, or enquiry number..."
@@ -526,6 +527,7 @@ export default function CrmPage() {
           <DataTable
             columns={quotationColumns}
             data={quotations}
+            onRowDoubleClick={(row) => setActiveQuotation(row)}
             exportFileName="crm-quotations"
             searchable
             searchPlaceholder="Search quotes by number, customer..."

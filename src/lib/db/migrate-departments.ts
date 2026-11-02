@@ -5,7 +5,7 @@ import crypto from 'crypto';
 export async function migrateDepartmentsAndRBAC() {
   console.log('--- Starting Department & RBAC Migration ---');
 
-  // 1. Check if department_id and role_id exist in users table
+  // 1. Check if department_id, role_id, custom_modules, org_name exist in users table
   const userCols = db.prepare('PRAGMA table_info(users)').all().map((c: any) => c.name);
   if (!userCols.includes('department_id')) {
     console.log('Adding department_id to users...');
@@ -14,6 +14,18 @@ export async function migrateDepartmentsAndRBAC() {
   if (!userCols.includes('role_id')) {
     console.log('Adding role_id to users...');
     db.prepare('ALTER TABLE users ADD COLUMN role_id TEXT REFERENCES roles(id)').run();
+  }
+  if (!userCols.includes('custom_modules')) {
+    console.log('Adding custom_modules to users...');
+    db.prepare('ALTER TABLE users ADD COLUMN custom_modules TEXT').run();
+  }
+  if (!userCols.includes('org_name')) {
+    console.log('Adding org_name to users...');
+    db.prepare("ALTER TABLE users ADD COLUMN org_name TEXT DEFAULT 'Proficient Transforms HQ'").run();
+  }
+  if (!userCols.includes('default_dashboard')) {
+    console.log('Adding default_dashboard to users...');
+    db.prepare("ALTER TABLE users ADD COLUMN default_dashboard TEXT DEFAULT 'DASHBOARD'").run();
   }
 
   // 2. Check if code column exists in departments

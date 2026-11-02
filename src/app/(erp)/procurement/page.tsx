@@ -224,6 +224,7 @@ export default function ProcurementPage() {
               },
             ]}
             data={mrs}
+            onRowDoubleClick={(row) => setActiveMR(row)}
             exportFileName="material-requisitions"
             searchable
             searchPlaceholder="Search requisitions..."
@@ -262,6 +263,7 @@ export default function ProcurementPage() {
               },
             ]}
             data={pos}
+            onRowDoubleClick={(row) => setShowPoModal(true)}
             exportFileName="purchase-orders"
             searchable
             searchPlaceholder="Search purchase orders..."

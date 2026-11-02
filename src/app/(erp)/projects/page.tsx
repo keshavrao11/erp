@@ -213,6 +213,7 @@ export default function ProjectsPage() {
         <DataTable
           columns={columns}
           data={projects}
+          onRowDoubleClick={(row) => setActiveProject(row)}
           searchable
           searchPlaceholder="Search projects by code, name, city..."
           searchFilter={(item, q) =>

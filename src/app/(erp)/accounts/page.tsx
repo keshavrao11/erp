@@ -313,6 +313,11 @@ export default function AccountsPage() {
               { key: 'status', header: 'Status', render: (r: any) => <Badge variant="success">{r.status}</Badge> },
             ]}
             data={vouchers}
+            onRowDoubleClick={(row) => {
+              setVoucherType(row.voucher_type || 'JOURNAL');
+              setNarration(row.narration || '');
+              setShowVoucherModal(true);
+            }}
             exportFileName="vouchers-journal"
             searchable
             searchPlaceholder="Search vouchers by number, narration..."

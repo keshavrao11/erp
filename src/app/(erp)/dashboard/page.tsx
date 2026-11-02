@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   FolderKanban,
   Landmark,
@@ -56,6 +56,7 @@ function formatInr(paise: number) {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [roleView, setRoleView] = useState<string>('EXECUTIVE');
@@ -205,13 +206,17 @@ export default function DashboardPage() {
       {/* Vertical-Wise Financial & Operational Drill-Down */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Construction Vertical Card */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between hover:border-blue-300 transition-colors">
+        <div
+          onDoubleClick={() => router.push('/construction')}
+          title="Double-click to open Construction Workspace"
+          className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between hover:border-blue-300 transition-colors cursor-pointer group"
+        >
           <div>
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded">
                 Vertical 01 · Construction
               </span>
-              <Building className="w-5 h-5 text-slate-400" />
+              <Building className="w-5 h-5 text-slate-400 group-hover:text-blue-600 transition-colors" />
             </div>
             <h3 className="text-base font-bold text-slate-900">The Grand Heritage Villas</h3>
             <p className="text-xs text-slate-500 mt-1">
@@ -241,13 +246,17 @@ export default function DashboardPage() {
         </div>
 
         {/* Interiors Vertical Card */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between hover:border-purple-300 transition-colors">
+        <div
+          onDoubleClick={() => router.push('/interiors')}
+          title="Double-click to open Interiors Workspace"
+          className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between hover:border-purple-300 transition-colors cursor-pointer group"
+        >
           <div>
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-purple-600 bg-purple-50 px-2.5 py-1 rounded">
                 Vertical 02 · Interiors
               </span>
-              <Building className="w-5 h-5 text-slate-400" />
+              <Building className="w-5 h-5 text-slate-400 group-hover:text-purple-600 transition-colors" />
             </div>
             <h3 className="text-base font-bold text-slate-900">Penthouse Luxe Suite Fit-out</h3>
             <p className="text-xs text-slate-500 mt-1">
@@ -277,13 +286,17 @@ export default function DashboardPage() {
         </div>
 
         {/* Land Development Vertical Card */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between hover:border-emerald-300 transition-colors">
+        <div
+          onDoubleClick={() => router.push('/land-development')}
+          title="Double-click to open Land Development Workspace"
+          className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between hover:border-emerald-300 transition-colors cursor-pointer group"
+        >
           <div>
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded">
                 Vertical 03 · Land Dev
               </span>
-              <MapPin className="w-5 h-5 text-slate-400" />
+              <MapPin className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transition-colors" />
             </div>
             <h3 className="text-base font-bold text-slate-900">Green Meadows Community</h3>
             <p className="text-xs text-slate-500 mt-1">
@@ -332,7 +345,12 @@ export default function DashboardPage() {
           </div>
           <div className="divide-y divide-slate-100">
             {data?.recentVouchers?.map((v: any) => (
-              <div key={v.voucher_number} className="p-4 flex items-center justify-between hover:bg-slate-50/70 transition-colors">
+              <div
+                key={v.voucher_number}
+                onDoubleClick={() => router.push('/accounts')}
+                title="Double-click to open Accounts & Ledger Vouchers"
+                className="p-4 flex items-center justify-between hover:bg-blue-50/60 transition-colors cursor-pointer select-none"
+              >
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-lg bg-blue-50 text-blue-700 font-mono text-xs font-bold">
                     {v.voucher_type}

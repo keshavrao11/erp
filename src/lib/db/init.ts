@@ -29,3 +29,4 @@ export function ensureDatabaseInitialized(database: Database.Database) {
     console.warn('[Database Init Warning]', err);
   }
 }
+

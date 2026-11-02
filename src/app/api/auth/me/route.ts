@@ -10,28 +10,46 @@ export async function GET() {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 
-  // Get department info if not in session
+  // Get user details, custom SaaS module overrides, org & dashboard preference
   let deptCode = session.departmentCode;
   let deptName = session.departmentName;
+  let orgName = 'Proficient Transforms HQ';
+  let defaultDashboard = 'DASHBOARD';
+  let customModules: string[] | null = null;
 
-  if (!deptCode && session.userId) {
+  if (session.userId) {
     const userRow = db.prepare(`
-      SELECT d.code as department_code, d.name as department_name
+      SELECT u.custom_modules, u.org_name, u.default_dashboard,
+             d.code as department_code, d.name as department_name
       FROM users u
       LEFT JOIN departments d ON d.id = u.department_id
       WHERE u.id = ?
     `).get(session.userId) as any;
     if (userRow) {
-      deptCode = userRow.department_code;
-      deptName = userRow.department_name;
+      if (userRow.department_code) deptCode = userRow.department_code;
+      if (userRow.department_name) deptName = userRow.department_name;
+      if (userRow.org_name) orgName = userRow.org_name;
+      if (userRow.default_dashboard) defaultDashboard = userRow.default_dashboard;
+      if (userRow.custom_modules) {
+        try {
+          const parsed = JSON.parse(userRow.custom_modules);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            customModules = parsed;
+          }
+        } catch {}
+      }
     }
   }
 
-  const allowedModules = getAllowedModulesForUser(
+  const baseAllowed = getAllowedModulesForUser(
     session.roles,
     deptCode,
     session.activeDepartmentOverride
   );
+
+  const allowedModules = (customModules && (!session.roles.includes('SUPER_ADMIN') || (session.activeDepartmentOverride && session.activeDepartmentOverride !== 'ALL')))
+    ? customModules
+    : baseAllowed;
 
   return NextResponse.json({
     userId: session.userId,
@@ -42,6 +60,9 @@ export async function GET() {
     departmentCode: deptCode || 'OPERATIONS',
     departmentName: deptName || 'Operations & Projects',
     activeDepartment: session.activeDepartmentOverride || 'ALL',
+    orgName,
+    defaultDashboard,
+    customModules,
     allowedModules,
   });
 }

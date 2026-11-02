@@ -7,8 +7,8 @@ import crypto from 'crypto';
 export const GET = withErrorHandler(async (req: NextRequest) => {
   const { session } = await requireAuth(req, 'USERS', 'VIEW');
   const users = db.prepare(`
-    SELECT u.id, u.username, u.email, u.full_name, u.is_active, u.last_login_at, u.created_at,
-           u.department_id, u.role_id,
+    SELECT u.id, u.username, u.email, u.full_name, u.phone, u.is_active, u.last_login_at, u.created_at,
+           u.department_id, u.role_id, u.custom_modules, u.org_name, u.default_dashboard,
            d.name as department_name, d.code as department_code,
            r.name as role_name, r.code as role_code,
            GROUP_CONCAT(r.name, ', ') as roles
@@ -21,7 +21,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
     ORDER BY u.created_at DESC
   `).all(session.companyId);
 
-  const roles = db.prepare(`SELECT id, code, name FROM roles ORDER BY name`).all();
+  const roles = db.prepare(`SELECT id, code, name, description FROM roles ORDER BY name`).all();
   const departments = db.prepare(`SELECT id, code, name FROM departments ORDER BY name`).all();
 
   return NextResponse.json({ users, roles, departments });
@@ -43,7 +43,6 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   const userId = crypto.randomUUID();
   const hash = await argon2.hash(body.password);
 
-  // Pick first role & dept if not provided
   let roleId = body.roleId;
   if (!roleId) {
     const r = db.prepare(`SELECT id FROM roles WHERE code = 'CRM' LIMIT 1`).get() as any;
@@ -56,11 +55,28 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     departmentId = d?.id;
   }
 
+  const customModulesStr = Array.isArray(body.customModules) ? JSON.stringify(body.customModules) : null;
+  const orgName = body.orgName || 'Proficient Transforms HQ';
+  const defaultDashboard = body.defaultDashboard || 'DASHBOARD';
+
   runInTransaction((tx) => {
     tx.prepare(`
-      INSERT INTO users (id, company_id, username, email, full_name, phone, password_hash, department_id, role_id, is_active, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-    `).run(userId, session.companyId, body.username, body.email, body.fullName, body.phone || null, hash, departmentId, roleId);
+      INSERT INTO users (id, company_id, username, email, full_name, phone, password_hash, department_id, role_id, custom_modules, org_name, default_dashboard, is_active, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+    `).run(
+      userId,
+      session.companyId,
+      body.username,
+      body.email,
+      body.fullName,
+      body.phone || null,
+      hash,
+      departmentId,
+      roleId,
+      customModulesStr,
+      orgName,
+      defaultDashboard
+    );
 
     tx.prepare(`INSERT OR IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)`).run(userId, roleId);
   });
@@ -80,8 +96,38 @@ export const PATCH = withErrorHandler(async (req: NextRequest) => {
     db.prepare(`UPDATE users SET is_active = ? WHERE id = ?`).run(body.isActive ? 1 : 0, body.id);
   }
 
+  if (body.fullName !== undefined) {
+    db.prepare(`UPDATE users SET full_name = ? WHERE id = ?`).run(body.fullName, body.id);
+  }
+
+  if (body.email !== undefined) {
+    db.prepare(`UPDATE users SET email = ? WHERE id = ?`).run(body.email, body.id);
+  }
+
+  if (body.phone !== undefined) {
+    db.prepare(`UPDATE users SET phone = ? WHERE id = ?`).run(body.phone, body.id);
+  }
+
   if (body.departmentId) {
     db.prepare(`UPDATE users SET department_id = ? WHERE id = ?`).run(body.departmentId, body.id);
+  }
+
+  if (body.orgName !== undefined) {
+    db.prepare(`UPDATE users SET org_name = ? WHERE id = ?`).run(body.orgName, body.id);
+  }
+
+  if (body.defaultDashboard !== undefined) {
+    db.prepare(`UPDATE users SET default_dashboard = ? WHERE id = ?`).run(body.defaultDashboard, body.id);
+  }
+
+  if (body.customModules !== undefined) {
+    const modulesStr = Array.isArray(body.customModules) ? JSON.stringify(body.customModules) : null;
+    db.prepare(`UPDATE users SET custom_modules = ? WHERE id = ?`).run(modulesStr, body.id);
+  }
+
+  if (body.password) {
+    const hash = await argon2.hash(body.password);
+    db.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`).run(hash, body.id);
   }
 
   if (body.roleId) {
@@ -89,6 +135,27 @@ export const PATCH = withErrorHandler(async (req: NextRequest) => {
     db.prepare(`DELETE FROM user_roles WHERE user_id = ?`).run(body.id);
     db.prepare(`INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)`).run(body.id, body.roleId);
   }
+
+  return NextResponse.json({ success: true });
+});
+
+export const DELETE = withErrorHandler(async (req: NextRequest) => {
+  await requireAuth(req, 'USERS', 'DELETE');
+  const userId = req.nextUrl.searchParams.get('id');
+  if (!userId) {
+    return NextResponse.json({ error: 'User ID required' }, { status: 400 });
+  }
+
+  // Prevent deleting super admin
+  const user = db.prepare(`SELECT username FROM users WHERE id = ?`).get(userId) as any;
+  if (user?.username === 'admin') {
+    return NextResponse.json({ error: 'Cannot delete primary Super Admin account' }, { status: 403 });
+  }
+
+  runInTransaction((tx) => {
+    tx.prepare(`DELETE FROM user_roles WHERE user_id = ?`).run(userId);
+    tx.prepare(`DELETE FROM users WHERE id = ?`).run(userId);
+  });
 
   return NextResponse.json({ success: true });
 });

@@ -281,6 +281,7 @@ export default function ConstructionPage() {
               },
             ]}
             data={boqItems}
+            onRowDoubleClick={(row) => setActiveBoq(row)}
             exportFileName="construction-boq"
             searchable
             searchPlaceholder="Search BOQ items..."
@@ -302,6 +303,15 @@ export default function ConstructionPage() {
               { key: 'status', header: 'Status', render: (r: any) => <Badge variant={r.status === 'APPROVED' ? 'success' : 'info'}>{r.status}</Badge> },
             ]}
             data={dprs}
+            onRowDoubleClick={(row) => {
+              setDprForm({
+                weather: row.weather || 'Clear',
+                progress: row.overall_progress_percent || 0,
+                summary: row.summary || '',
+                status: row.status || 'SUBMITTED',
+              });
+              setShowDprModal(true);
+            }}
             exportFileName="construction-dpr-register"
             searchable
             searchPlaceholder="Search DPR by date or summary..."
@@ -322,6 +332,15 @@ export default function ConstructionPage() {
               { key: 'total_wages_paise', header: 'Daily Wage Total', render: (r: any) => <span className="font-mono font-bold text-slate-900 text-xs">{formatInr(r.total_wages_paise)}</span> },
             ]}
             data={labourLogs}
+            onRowDoubleClick={(row) => {
+              setLabourForm({
+                tradeCategory: row.trade_category || 'MASON',
+                contractorName: row.contractor_name || 'Cauvery Civil Works',
+                countPresent: Number(row.count_present) || 10,
+                wagesPerDayRupees: (row.wages_per_day_paise || 95000) / 100,
+              });
+              setShowLabourModal(true);
+            }}
             exportFileName="labour-attendance-register"
             searchable
             searchPlaceholder="Search labour logs by trade or contractor..."
@@ -348,6 +367,13 @@ export default function ConstructionPage() {
                 { key: 'status', header: 'Status', render: (r: any) => <Badge variant={r.status === 'APPROVED' ? 'success' : 'warning'}>{r.status}</Badge> },
               ]}
               data={contractorData.bills}
+              onRowDoubleClick={(row) => {
+                setBillForm({
+                  contractorId: row.contractor_id || (contractorData.contractors?.[0]?.id || ''),
+                  grossRupees: (row.gross_amount_paise || 25000000) / 100,
+                });
+                setShowBillModal(true);
+              }}
               exportFileName="contractor-bills-register"
               searchable
               searchPlaceholder="Search contractor bills..."

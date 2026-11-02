@@ -11,9 +11,17 @@ const variants: Record<Variant, string> = {
   purple: 'bg-purple-50 text-purple-700 border border-purple-200',
 };
 
-export function Badge({ children, variant = 'default' }: { children: React.ReactNode; variant?: Variant }) {
+export function Badge({
+  children,
+  variant = 'default',
+  className = '',
+}: {
+  children: React.ReactNode;
+  variant?: Variant;
+  className?: string;
+}) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold tracking-wide ${variants[variant]}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold tracking-wide ${variants[variant]} ${className}`}>
       {children}
     </span>
   );

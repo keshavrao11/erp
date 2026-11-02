@@ -49,6 +49,11 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL,
     avatar_url    TEXT,
     is_active     INTEGER NOT NULL DEFAULT 1,
+    department_id TEXT REFERENCES departments(id),
+    role_id       TEXT REFERENCES roles(id),
+    custom_modules TEXT,
+    org_name      TEXT DEFAULT 'Proficient Transforms HQ',
+    default_dashboard TEXT DEFAULT 'DASHBOARD',
     last_login_at TEXT,
     created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
